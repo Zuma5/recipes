@@ -136,67 +136,37 @@
             button.parentElement.remove();
         }
 
+        function createRecipe() {
+            const recipeInputs = document.getElementById('recipeInputs');
+            const ingredients = recipeInputs.querySelectorAll('.ingredient');
+            const portion = document.getElementById('portion').value;
+            initialPortion = portion; // Save initial portion
+            initialIngredients = Array.from(ingredients).map((ingredientDiv) => {
+                return {
+                    name: ingredientDiv.querySelector('input[type="text"]').value,
+                    quantity: ingredientDiv.querySelector('input[type="number"]').value
+                };
+            });
 
- function createRecipe() {
-    const recipeName = document.getElementById('recipeName').value;
-    const ingredients = Array.from(document.querySelectorAll('.ingredient')).map(ingredientDiv => ({
-        name: ingredientDiv.querySelector('input[type="text"]').value,
-        quantity: ingredientDiv.querySelector('input[type="number"]').value
-    }));
-    const portion = document.getElementById('portion').value;
+            let recipeDetailsHTML = '<ul>';
 
-    const request = indexedDB.open('recipesDB', 1);
+            initialIngredients.forEach((ingredient) => {
+                recipeDetailsHTML += `<li>${ingredient.name} <b>${ingredient.quantity} g</b></li>`;
+            });
 
-    request.onupgradeneeded = function(event) {
-        const db = event.target.result;
-        const objectStore = db.createObjectStore('recipes', { keyPath: 'id', autoIncrement: true });
-        objectStore.createIndex('name', 'name', { unique: false });
-        objectStore.createIndex('ingredients', 'ingredients', { unique: false });
-        objectStore.createIndex('portion', 'portion', { unique: false });
-    };
+            recipeDetailsHTML += '</ul>';
+            recipeDetailsHTML += `<div class="calculation">Total ${portion} g</div>`;
 
-    request.onsuccess = function(event) {
-        const db = event.target.result;
-        const transaction = db.transaction(['recipes'], 'readwrite');
-        const objectStore = transaction.objectStore('recipes');
-
-        const recipe = { name: recipeName, ingredients: ingredients, portion: portion };
-        const addRequest = objectStore.add(recipe);
-
-        addRequest.onsuccess = function() {
-            console.log('Recipe added to IndexedDB');
-            // Update the interface
-            const recipeDetailsHTML = generateRecipeHTML(recipe);
             const recipeDetailsDiv = document.getElementById('recipeDetails');
             recipeDetailsDiv.innerHTML = recipeDetailsHTML;
 
             const recipeTitle = document.getElementById('recipeTitle');
+            const recipeName = document.getElementById('recipeName').value;
             recipeTitle.innerText = recipeName;
 
-            const recipeInputs = document.getElementById('recipeInputs');
             recipeInputs.style.display = 'none';
             document.getElementById('recipe').style.display = 'block';
-        };
-
-        addRequest.onerror = function() {
-            console.error('Error adding recipe to IndexedDB');
-        };
-    };
-
-    request.onerror = function(event) {
-        console.error('Error opening IndexedDB', event.target.error);
-    };
-}
-
-function generateRecipeHTML(recipe) {
-    let recipeDetailsHTML = '<ul>';
-    recipe.ingredients.forEach((ingredient) => {
-        recipeDetailsHTML += `<li>${ingredient.name} <b>${ingredient.quantity} g</b></li>`;
-    });
-    recipeDetailsHTML += '</ul>';
-    recipeDetailsHTML += `<div class="calculation">Total ${recipe.portion} g</div>`;
-    return recipeDetailsHTML;
-}
+        }
 
         function recalculateRecipe() {
             const newPortion = document.getElementById('newPortion').value;
@@ -273,6 +243,16 @@ function generateRecipeHTML(recipe) {
                 releaseSleep();
             }
         }
+        document.addEventListener("visibilitychange", function() {
+        if (document.visibilityState === 'visible') {
+            const toggleSleepCheckbox = document.getElementById('toggleSleep');
+            if (toggleSleepCheckbox.checked) {
+                preventSleep();
+            }
+        } else {
+            releaseSleep();
+        }
+        });
     </script>
 </body>
 </html>
