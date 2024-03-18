@@ -124,6 +124,7 @@
     <script>
         let initialPortion = 0;
         let initialIngredients = [];
+        let sleepLockInterval;
 
         function addIngredient(button) {
             const ingredientDiv = button.parentElement.cloneNode(true);
@@ -208,6 +209,16 @@
             recipeInputs.style.display = 'block';
             document.getElementById('recipe').style.display = 'none';
         }
+        
+        function toggleSleepLock(checked) {
+            if (checked) {
+                sleepLockInterval = setInterval(preventSleep, 30000); // Блокировать сон каждые 30 секунд
+            } else {
+                clearInterval(sleepLockInterval); // Очистить интервал при выключении
+                releaseSleep();
+            }
+        }
+        
         function preventSleep() {
             if ('wakeLock' in navigator) {
                 navigator.wakeLock.request('screen')
@@ -236,33 +247,17 @@
             }
         }
 
-        function toggleSleepLock(checked) {
-            if (checked) {
-                preventSleep();
-            } else {
-                releaseSleep();
-            }
-        }
+        // Обработчик события visibilitychange
         document.addEventListener("visibilitychange", function() {
-        if (document.visibilityState === 'visible') {
-            const toggleSleepCheckbox = document.getElementById('toggleSleep');
-            if (toggleSleepCheckbox.checked) {
-                preventSleep();
-            }
-        } else {
-            releaseSleep();
-        }
-        });
-        let sleepLockInterval;
-
-        function toggleSleepLock(checked) {
-            if (checked) {
-                sleepLockInterval = setInterval(preventSleep, 30000); // Блокировать сон каждые 30 секунд
+            if (document.visibilityState === 'visible') {
+                const toggleSleepCheckbox = document.getElementById('toggleSleep');
+                if (toggleSleepCheckbox.checked) {
+                    preventSleep();
+                }
             } else {
-                clearInterval(sleepLockInterval); // Очистить интервал при выключении
                 releaseSleep();
             }
-        }
+        });
     </script>
 </body>
 </html>
