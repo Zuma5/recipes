@@ -253,6 +253,16 @@
             releaseSleep();
         }
         });
+        let sleepLockInterval;
+
+        function toggleSleepLock(checked) {
+            if (checked) {
+                sleepLockInterval = setInterval(preventSleep, 30000); // Блокировать сон каждые 30 секунд
+            } else {
+                clearInterval(sleepLockInterval); // Очистить интервал при выключении
+                releaseSleep();
+            }
+        }
     </script>
 </body>
 </html>
