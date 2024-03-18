@@ -122,9 +122,7 @@
     </div>
 
     <script>
-        let initialPortion = 0;
-        let initialIngredients = [];
-        let sleepLockInterval;
+        let keepAwakeInterval;
 
         function addIngredient(button) {
             const ingredientDiv = button.parentElement.cloneNode(true);
@@ -186,7 +184,6 @@
             recipeDetailsDiv.innerHTML = recipeDetailsHTML;
         }
 
-
         function resetRecipe() {
             const recipeDetailsDiv = document.getElementById('recipeDetails');
             let recipeDetailsHTML = '<ul>';
@@ -209,7 +206,7 @@
             recipeInputs.style.display = 'block';
             document.getElementById('recipe').style.display = 'none';
         }
-        
+
         function toggleSleepLock(checked) {
             if (checked) {
                 sleepLockInterval = setInterval(preventSleep, 30000); // Блокировать сон каждые 30 секунд
@@ -218,7 +215,7 @@
                 releaseSleep();
             }
         }
-        
+
         function preventSleep() {
             if ('wakeLock' in navigator) {
                 navigator.wakeLock.request('screen')
@@ -247,7 +244,33 @@
             }
         }
 
-        // Обработчик события visibilitychange
+        function keepAwake() {
+            fetch(window.location.href)
+                .then(response => {
+                    // Обработка ответа, если необходимо
+                })
+                .catch(error => {
+                    console.error('Error keeping awake:', error);
+                });
+        }
+
+        function startKeepAwake() {
+            keepAwake();
+            keepAwakeInterval = setInterval(keepAwake, 30000);
+        }
+
+        function stopKeepAwake() {
+            clearInterval(keepAwakeInterval);
+        }
+
+        function toggleKeepAwake(checked) {
+            if (checked) {
+                startKeepAwake();
+            } else {
+                stopKeepAwake();
+            }
+        }
+
         document.addEventListener("visibilitychange", function() {
             if (document.visibilityState === 'visible') {
                 const toggleSleepCheckbox = document.getElementById('toggleSleep');
