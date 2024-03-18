@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe</title>
+    <style>
+        * {
+            list-style: none;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        li {
+            display: flex;
+            justify-content: space-between;
+            border: 2px solid lightcoral;
+            background-color: linen;
+            width: 200px;
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+        }
+        .ingredient {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .ingredient input {
+            margin-right: 10px;
+        }
+        .ingredient button {
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .ingredient .minus {
+            background-color: #ffcccc;
+        }
+        .ingredient .plus {
+            background-color: #7BCDA4;
+            margin-left: 10px;
+        }
+        #recipe {
+            margin-bottom: 20px;
+        }
+        #newPortion {
+            height: 20px;
+        }
+        .header_recipe {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 223px;
+        }
+        .rec_but {
+            display: flex;
+            justify-content: space-between;
+            width: 290px;
+            margin-top: 15px;
+        }
+        .rec_but>label {
+            align-self: center;
+        }
+
+        .edit-button, .recalculate-button {
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .no-sleep {
+            margin-top: 10px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="recipeInputs">
+        <div>
+            <label for="recipeName">Recipe Name:</label>
+            <input type="text" id="recipeName" placeholder="Recipe Name" style="margin-bottom: 10px;">
+        </div>
+        <div class="ingredient">
+            <input type="text" placeholder="Ingredient">
+            <input type="number" placeholder="Quantity">
+            <button class="minus" onclick="removeIngredient(this)">–</button>
+            <button class="plus" onclick="addIngredient(this)">+</button>
+        </div>
+        <div>
+            <label for="portion">Number or weight:</label>
+            <input type="number" id="portion">
+            <button onclick="createRecipe()">✔️ Create recipe</button>
+        </div>
+    </div>
+    
+    <div id="recipe" style="display:none;">
+
+        <div class="header_recipe">
+            <h2 id="recipeTitle">Recipe</h2>
+            <span class="edit-button" onclick="editRecipe()">✏️</span>
+        </div>
+        <div id="recipeDetails"></div>
+        <div class="rec_but">
+            <label for="newPortion">Recalculate:</label>
+            <input type="number" id="newPortion">
+            <span class="recalculate-button" onclick="recalculateRecipe()">🔄</span>
+        </div>
+    </div>
+        <div class="no-sleep">
+        <label for="toggleSleep">Prevent Sleep Mode</label>
+        <input type="checkbox" id="toggleSleep" onchange="toggleSleepLock(this.checked)">
+    </div>
+
+    <script>
+        let initialPortion = 0;
+        let initialIngredients = [];
+
+        function addIngredient(button) {
+            const ingredientDiv = button.parentElement.cloneNode(true);
+            ingredientDiv.querySelector('input[type="text"]').value = '';
+            ingredientDiv.querySelector('input[type="number"]').value = '';
+            document.getElementById('recipeInputs').insertBefore(ingredientDiv, button.parentElement.nextSibling);
+        }
+
+        function removeIngredient(button) {
+            button.parentElement.remove();
+        }
+
+        function createRecipe() {
+    const recipeInputs = document.getElementById('recipeInputs');
+    const ingredients = recipeInputs.querySelectorAll('.ingredient');
+    const portion = document.getElementById('portion').value;
+    initialPortion = portion; // Save initial portion
+    initialIngredients = Array.from(ingredients).map((ingredientDiv) => {
+        return {
+            name: ingredientDiv.querySelector('input[type="text"]').value,
+            quantity: ingredientDiv.querySelector('input[type="number"]').value
+        };
+    });
+
+    let recipeDetailsHTML = '<ul>';
+
+    initialIngredients.forEach((ingredient) => {
+        recipeDetailsHTML += `<li>${ingredient.name} <b>${ingredient.quantity} g</b></li>`;
+    });
+
+    recipeDetailsHTML += '</ul>';
+    recipeDetailsHTML += `<div class="calculation">Total ${portion} g</div>`;
+
+    const recipeDetailsDiv = document.getElementById('recipeDetails');
+    recipeDetailsDiv.innerHTML = recipeDetailsHTML;
+
+    const recipeTitle = document.getElementById('recipeTitle');
+    const recipeName = document.getElementById('recipeName').value;
+    recipeTitle.innerText = recipeName;
+
+    recipeInputs.style.display = 'none';
+    document.getElementById('recipe').style.display = 'block';
+
+    // Save recipe to localStorage
+    const savedRecipes = JSON.parse(localStorage.getItem('recipes')) || [];
+    const newRecipe = { name: recipeName, ingredients: initialIngredients, portion: portion };
+    savedRecipes.push(newRecipe);
+    localStorage.setItem('recipes', JSON.stringify(savedRecipes));
+}
+
+
+        function recalculateRecipe() {
+            const newPortion = document.getElementById('newPortion').value;
+            const recipeDetailsDiv = document.getElementById('recipeDetails');
+            let recipeDetailsHTML = '<ul>';
+
+            initialIngredients.forEach((ingredient) => {
+                let recalculatedQuantity = (parseFloat(ingredient.quantity) * newPortion) / initialPortion;
+                recalculatedQuantity = recalculatedQuantity % 1 === 0 ? recalculatedQuantity.toFixed(0) : recalculatedQuantity.toFixed(2);
+                recipeDetailsHTML += `<li>${ingredient.name} <b>${recalculatedQuantity} g</b></li>`;
+            });
+
+            recipeDetailsHTML += '</ul>';
+            recipeDetailsHTML += `<div class="calculation">Recalculated for ${newPortion} g</div>`;
+
+            recipeDetailsDiv.innerHTML = recipeDetailsHTML;
+        }
+
+
+        function resetRecipe() {
+            const recipeDetailsDiv = document.getElementById('recipeDetails');
+            let recipeDetailsHTML = '<ul>';
+
+            initialIngredients.forEach((ingredient) => {
+                recipeDetailsHTML += `<li>${ingredient.name} <b>${ingredient.quantity} g</b></li>`;
+            });
+
+            recipeDetailsHTML += '</ul>';
+            recipeDetailsHTML += `<div class="calculation">Total ${initialPortion} g</div>`;
+
+            recipeDetailsDiv.innerHTML = recipeDetailsHTML;
+            document.getElementById('newPortion').value = '';
+        }
+
+        function editRecipe() {
+            const recipeInputs = document.getElementById('recipeInputs');
+            const recipeDetailsDiv = document.getElementById('recipeDetails');
+            recipeDetailsDiv.innerHTML = '';
+            recipeInputs.style.display = 'block';
+            document.getElementById('recipe').style.display = 'none';
+        }
+        function preventSleep() {
+            if ('wakeLock' in navigator) {
+                navigator.wakeLock.request('screen')
+                    .then(() => {
+                        console.log('Screen Wake Lock is active');
+                    })
+                    .catch((err) => {
+                        console.error(`Error: ${err}`);
+                    });
+            } else {
+                console.error('Wake Lock API is not supported');
+            }
+        }
+
+        function releaseSleep() {
+            if ('wakeLock' in navigator) {
+                navigator.wakeLock.release()
+                    .then(() => {
+                        console.log('Screen Wake Lock has been released');
+                    })
+                    .catch((err) => {
+                        console.error(`Error: ${err}`);
+                    });
+            } else {
+                console.error('Wake Lock API is not supported');
+            }
+        }
+
+        function toggleSleepLock(checked) {
+            if (checked) {
+                preventSleep();
+            } else {
+                releaseSleep();
+            }
+        }
+    </script>
+</body>
+</html>
